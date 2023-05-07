@@ -1,45 +1,41 @@
 package dev.stefanosansone.imagesearch.ui.feature.detail
 
+import android.content.ContentValues.TAG
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.paging.PagingData
-import androidx.paging.cachedIn
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dev.stefanosansone.imagesearch.data.database.daos.entity.ImageEntity
-import dev.stefanosansone.imagesearch.data.database.daos.entity.asExternalModel
 import dev.stefanosansone.imagesearch.data.model.Image
 import dev.stefanosansone.imagesearch.data.repository.ImageRepository
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class ImageDetailViewModel @Inject constructor(
     imageRepository: ImageRepository,
     savedStateHandle: SavedStateHandle,
-): ViewModel() {
+) : ViewModel() {
 
-    val uiState: StateFlow<ImageDetailUiState> = imageRepository.getImageById(savedStateHandle["imageId"]?: "").map {
-        //Log.d("stef",it.toString())
-        ImageDetailUiState.Success(
-            it.asExternalModel()
-        )
+    private val imageId: String = savedStateHandle["imageId"] ?: ""
+
+    private val _uiState = MutableStateFlow<ImageDetailUiState>(ImageDetailUiState.Loading)
+    val uiState: StateFlow<ImageDetailUiState> = _uiState.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            try {
+                val image = imageRepository.getImageById(imageId)
+                _uiState.value = ImageDetailUiState.Success(image)
+            } catch (e: Exception) {
+                Log.d(TAG,"Error : ${e.localizedMessage}")
+                _uiState.value = ImageDetailUiState.Error
+            }
+        }
     }
-    .stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = ImageDetailUiState.Loading,
-    )
-
 }
 
 sealed interface ImageDetailUiState {

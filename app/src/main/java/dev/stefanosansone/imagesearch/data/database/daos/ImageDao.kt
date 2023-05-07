@@ -20,5 +20,5 @@ interface ImageDao {
     suspend fun deleteAll()
 
     @Query("SELECT * FROM images WHERE id LIKE :id ")
-    fun getImageById(id: String): Flow<ImageEntity>
+    fun getImageById(id: String): ImageEntity
 }

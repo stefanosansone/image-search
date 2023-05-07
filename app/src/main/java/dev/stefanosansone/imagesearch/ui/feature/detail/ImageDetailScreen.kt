@@ -34,7 +34,7 @@ internal fun ImageDetailScreen(
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    Scaffold() { paddingValues ->
+    Scaffold { paddingValues ->
         when(uiState){
             is ImageDetailUiState.Success -> ImageDetailContent(paddingValues,
                 (uiState as ImageDetailUiState.Success).image)
